@@ -1,8 +1,14 @@
+"""
+Compiled templating language for Genie.
+"""
 module Flax
 
 using Genie, Renderer, Gumbo, Logger, Configuration, Router, SHA, App, Reexport, JSON, DataStructures
-using ControllerHelper, ValidationHelper
-@dependencies
+
+if IS_IN_APP
+  using ControllerHelper, ValidationHelper
+  @eval parse("@dependencies")
+end
 
 export HTMLString, JSONString
 export doctype, var_dump, include_template, @vars, @yield, el, foreachvar
@@ -31,6 +37,13 @@ typealias JSONString String
 
 task_local_storage(:__vars, Dict{Symbol,Any}())
 
+
+"""
+    prepare_template(s::String)
+    prepare_template{T}(v::Vector{T})
+
+Cleans up the template before rendering (ex by removing empty nodes).
+"""
 function prepare_template(s::String)
   s
 end
@@ -41,6 +54,12 @@ function prepare_template{T}(v::Vector{T})
   join(v)
 end
 
+
+"""
+    attributes(attrs::Vector{Pair{Symbol,String}} = Vector{Pair{Symbol,String}}()) :: Vector{String}
+
+Parses HTML attributes.
+"""
 function attributes(attrs::Vector{Pair{Symbol,String}} = Vector{Pair{Symbol,String}}()) :: Vector{String}
   a = String[]
   for (k,v) in attrs
@@ -54,6 +73,12 @@ function attributes(attrs::Vector{Pair{Symbol,String}} = Vector{Pair{Symbol,Stri
   a
 end
 
+
+"""
+    normal_element(f::Function, elem::String, attrs::Vector{Pair{Symbol,String}} = Vector{Pair{Symbol,String}}()) :: HTMLString
+
+Generates a regular HTML element in the form <...></...>
+"""
 function normal_element(f::Function, elem::String, attrs::Vector{Pair{Symbol,String}} = Vector{Pair{Symbol,String}}()) :: HTMLString
   a = attributes(attrs)
 
@@ -65,12 +90,25 @@ function normal_element(elem::String, attrs::Vector{Pair{Symbol,String}} = Vecto
   """<$( string(lowercase(elem)) * (! isempty(a) ? (" " * join(a, " ")) : "") )></$( string(lowercase(elem)) )>\n"""
 end
 
+
+"""
+    void_element(elem::String, attrs::Vector{Pair{Symbol,String}} = Vector{Pair{Symbol,String}}()) :: HTMLString
+
+Generates a void HTML element in the form <...>
+"""
 function void_element(elem::String, attrs::Vector{Pair{Symbol,String}} = Vector{Pair{Symbol,String}}()) :: HTMLString
   a = attributes(attrs)
 
   "<$( string(lowercase(elem)) * (! isempty(a) ? (" " * join(a, " ")) : "") )>\n"
 end
 
+
+"""
+    skip_element(f::Function) :: HTMLString
+    skip_element() :: HTMLString
+
+Cleans up empty elements. 
+"""
 function skip_element(f::Function) :: HTMLString
   """$(prepare_template(f()))\n"""
 end
@@ -78,6 +116,12 @@ function skip_element() :: HTMLString
   ""
 end
 
+
+"""
+    include_template(path::String; partial = true, func_name = "") :: String
+
+Includes a template inside another.
+"""
 function include_template(path::String; partial = true, func_name = "") :: String
   if App.config.log_views
     Logger.log("Including $path", :info)
@@ -120,6 +164,12 @@ function _include_template(path::String; partial = true, func_name = "") :: Stri
   end
 end
 
+
+"""
+    html(resource::Symbol, action::Symbol, layout::Symbol; vars...) :: Dict{Symbol,String}
+
+Renders a HTML view corresponding to a resource and a controller action.
+"""
 function html(resource::Symbol, action::Symbol, layout::Symbol; vars...) :: Dict{Symbol,String}
   try
     task_local_storage(:__vars, Dict{Symbol,Any}(vars))
@@ -135,6 +185,12 @@ function html(resource::Symbol, action::Symbol, layout::Symbol; vars...) :: Dict
   end
 end
 
+
+"""
+    flax(resource::Symbol, action::Symbol, layout::Symbol; vars...) :: Dict{Symbol,String}
+
+Renders a Flax view corresponding to a resource and a controller action.
+"""
 function flax(resource::Symbol, action::Symbol, layout::Symbol; vars...) :: Dict{Symbol,String}
   try
     julia_action_template_func = joinpath(Genie.RESOURCE_PATH, string(resource), Renderer.VIEWS_FOLDER, string(action) * FILE_EXT) |> include
@@ -170,6 +226,12 @@ function flax(resource::Symbol, action::Symbol, layout::Symbol; vars...) :: Dict
   end
 end
 
+
+"""
+    json(resource::Symbol, action::Symbol; vars...) :: Dict{Symbol,String}
+
+Renders a JSON view corresponding to a resource and a controller action.
+"""
 function json(resource::Symbol, action::Symbol; vars...) :: Dict{Symbol,String}
   try
     task_local_storage(:__vars, Dict{Symbol,Any}(vars))
@@ -184,11 +246,23 @@ function json(resource::Symbol, action::Symbol; vars...) :: Dict{Symbol,String}
   end
 end
 
+
+"""
+    function_name(file_path::String)
+
+Generates random functions names for generated Flax views functions.
+"""
 function function_name(file_path::String)
   file_path = relpath(file_path)
   "func_$(sha1(file_path) |> bytes2hex )"
 end
 
+
+"""
+    html_to_flax(file_path::String; partial = true) :: String
+
+Converts a HTML document to a Flax document.
+"""
 function html_to_flax(file_path::String; partial = true) :: String
   code =  """using Flax\n"""
   code *= """function $(function_name(file_path))() \n"""
@@ -198,6 +272,12 @@ function html_to_flax(file_path::String; partial = true) :: String
   code
 end
 
+
+"""
+    read_template_file(file_path::String) :: String
+
+Reads `file_path` template from disk.
+"""
 function read_template_file(file_path::String) :: String
   html = String[]
   open(file_path) do f
@@ -209,11 +289,23 @@ function read_template_file(file_path::String) :: String
   join(html, "\n")
 end
 
+
+"""
+    parse_template(file_path::String; partial = true) :: String
+
+Parses a HTML file into a `string` of Flax code.
+"""
 function parse_template(file_path::String; partial = true) :: String
   htmldoc = read_template_file(file_path) |> Gumbo.parsehtml
   parse_tree(htmldoc.root, "", 0, partial = partial)
 end
 
+
+"""
+    parse_tree(elem, output, depth; partial = true) :: String
+
+Parses a Gumbo tree structure into a `string` of Flax code.
+"""
 function parse_tree(elem, output, depth; partial = true) :: String
   if isa(elem, HTMLElement)
 
@@ -237,7 +329,7 @@ function parse_tree(elem, output, depth; partial = true) :: String
         x = v
 
         if startswith(v, "<\$") && endswith(v, "\$>")
-          v = (replace(replace(replace(v, "<\$", ""), "\$>", ""), "'", "\"") |> strip) 
+          v = (replace(replace(replace(v, "<\$", ""), "\$>", ""), "'", "\"") |> strip)
           x = v
           v = "\$($v)"
         end
@@ -286,6 +378,12 @@ function parse_tree(elem, output, depth; partial = true) :: String
   output
 end
 
+
+"""
+    parse_tags(line::Tuple{Int64,String}, strip_close_tag = false) :: String
+
+Parses special Flax tags.
+"""
 function parse_tags(line::Tuple{Int64,String}, strip_close_tag = false) :: String
   code = line[2]
 
@@ -295,9 +393,23 @@ function parse_tags(line::Tuple{Int64,String}, strip_close_tag = false) :: Strin
   code
 end
 
+
+"""
+    doctype(doctype::Symbol = :html) :: String
+
+Outputs document's doctype.
+"""
 function doctype(doctype::Symbol = :html) :: String
   "<!DOCTYPE $doctype>"
 end
+
+
+"""
+    doc(html::String) :: String
+    doc(doctype::Symbol, html::String) :: String
+
+Outputs document's doctype.
+"""
 function doc(html::String) :: String
   doctype() * "\n" * html
 end
@@ -305,7 +417,13 @@ function doc(doctype::Symbol, html::String) :: String
   doctype(doctype) * "\n" * html
 end
 
-function register_elements()
+
+"""
+    register_elements() :: Void
+
+Generated functions that represent Flax functions definitions corresponding to HTML elements.
+"""
+function register_elements() :: Void
   for elem in NORMAL_ELEMENTS
     """
       function $elem(f::Function = ()->"", attrs::Pair{Symbol,String}...) :: HTMLString
@@ -331,19 +449,35 @@ function register_elements()
 
     # @eval export $elem
   end
+
+  nothing
 end
 
 push!(LOAD_PATH,  abspath(Genie.HELPERS_PATH))
 
-function include_helpers()
+
+"""
+    include_helpers() :: Void
+
+Loads helpers and makes them available in the view layer.
+"""
+function include_helpers() :: Void
   for h in readdir(Genie.HELPERS_PATH)
     if isfile(joinpath(Genie.HELPERS_PATH, h)) && endswith(h, "Helper.jl")
       eval("""@reexport using $(replace(h, r"\.jl$", ""))""" |> parse)
     end
   end
+
+  nothing
 end
 
-function foreachvar(f::Function, key::Symbol, v::Vector)
+
+"""
+    foreachvar(f::Function, key::Symbol, v::Vector) :: String
+
+Utility function for looping over a `vector` `v` in the view layer.
+"""
+function foreachvar(f::Function, key::Symbol, v::Vector) :: String
   isempty(v) && return ""
 
   output = mapreduce(*, v) do (value)
@@ -362,8 +496,14 @@ function foreachvar(f::Function, key::Symbol, v::Vector)
 end
 
 register_elements()
-include_helpers()
+IS_IN_APP && include_helpers()
 
+
+"""
+    var_dump(var, html = true) :: String
+
+Utility function for dumping a variable.
+"""
 function var_dump(var, html = true) :: String
   iobuffer = IOBuffer()
   show(iobuffer, var)

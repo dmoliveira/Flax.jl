@@ -107,7 +107,7 @@ end
     skip_element(f::Function) :: HTMLString
     skip_element() :: HTMLString
 
-Cleans up empty elements. 
+Cleans up empty elements.
 """
 function skip_element(f::Function) :: HTMLString
   """$(prepare_template(f()))\n"""
@@ -160,6 +160,10 @@ function _include_template(path::String; partial = true, func_name = "") :: Stri
     (flax_code |> include_string)()
   catch ex
     @show flax_code
+
+    Logger.log("Error including Flax code $(flax_code)", :err)
+    Logger.log("$(@__FILE__):$(@__LINE__)", :err)
+
     rethrow(ex)
   end
 end
@@ -177,11 +181,10 @@ function html(resource::Symbol, action::Symbol, layout::Symbol; vars...) :: Dict
 
     Dict{Symbol,AbstractString}(:html => include_template(joinpath(Genie.APP_PATH, Renderer.LAYOUTS_FOLDER, string(layout) * TEMPLATE_EXT), partial = false) |> string |> doc)
   catch ex
-    if Configuration.is_dev()
-      rethrow(ex)
-    else
-      Router.serve_error_file_500()
-    end
+    Logger.log(string(ex), :err)
+    Logger.log("$(@__FILE__):$(@__LINE__)", :err)
+
+    rethrow(ex)
   end
 end
 
@@ -203,7 +206,7 @@ function flax(resource::Symbol, action::Symbol, layout::Symbol; vars...) :: Dict
     else
       message = "The Flax view should return a function"
       Logger.log(message, :err)
-      Logger.@location
+      Logger.log("$(@__FILE__):$(@__LINE__)")
 
       throw(message)
     end
@@ -213,16 +216,15 @@ function flax(resource::Symbol, action::Symbol, layout::Symbol; vars...) :: Dict
             else
               message = "The Flax template should return a function"
               Logger.log(message, :err)
-              Logger.@location
+              Logger.log("$(@__FILE__):$(@__LINE__)")
 
               throw(message)
             end
   catch ex
-    if Configuration.is_dev()
-      rethrow(ex)
-    else
-      Router.serve_error_file_500()
-    end
+    Logger.log(string(ex), :err)
+    Logger.log("$(@__FILE__):$(@__LINE__)", :err)
+
+    rethrow(ex)
   end
 end
 
@@ -238,11 +240,11 @@ function json(resource::Symbol, action::Symbol; vars...) :: Dict{Symbol,String}
 
     return Dict{Symbol,AbstractString}(:json => (joinpath(Genie.RESOURCE_PATH, string(resource), Renderer.VIEWS_FOLDER, string(action) * JSON_FILE_EXT) |> include) |> JSON.json)
   catch ex
-    if Configuration.is_dev()
-      rethrow(ex)
-    else
-      Router.serve_error_file_500()
-    end
+    Logger.log("Error generating JSON view", :err)
+    Logger.log(string(ex), :err)
+    Logger.log("$(@__FILE__):$(@__LINE__)", :err)
+
+    rethrow(ex)
   end
 end
 

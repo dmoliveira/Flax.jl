@@ -1,0 +1,20 @@
+site_name:        Flax.jl
+repo_url:         https://github.com/essenciary/Flax.jl
+site_description: Flax is the view layer and the templating library of Genie.jl, the high-performance high-productivity Julia web framework.
+site_author:      essenciary
+
+theme: readthedocs
+
+extra_css:
+  - assets/Documenter.css
+
+markdown_extensions:
+  - extra
+  - tables
+  - fenced_code
+  - mdx_math
+
+docs_dir: 'build'
+
+pages:
+  - Home: index.md

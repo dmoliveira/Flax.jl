@@ -1,5 +1,8 @@
 ![Flax Logo](https://dl.dropboxusercontent.com/s/qmui0enjtsq5esj/flax-logo.png)
 
+[![Stable](https://readthedocs.org/projects/docs/badge/?version=stable)](http://flaxjl.readthedocs.io/en/stable/build/)
+[![Latest](https://readthedocs.org/projects/docs/badge/?version=latest)](http://flaxjl.readthedocs.io/en/latest/build/)
+
 # Genie / Flax
 #### Flax is the templating engine of Genie.jl, the highly productive Julia web framework.
 

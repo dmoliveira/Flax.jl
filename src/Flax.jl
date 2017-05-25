@@ -177,7 +177,7 @@ Renders a HTML view corresponding to a resource and a controller action.
 function html(resource::Symbol, action::Symbol, layout::Symbol; vars...) :: Dict{Symbol,String}
   try
     task_local_storage(:__vars, Dict{Symbol,Any}(vars))
-    task_local_storage(:__yield, include_template(joinpath(Genie.RESOURCE_PATH, string(resource), Renderer.VIEWS_FOLDER, string(action) * TEMPLATE_EXT)))
+    task_local_storage(:__yield, include_template(joinpath(Genie.RESOURCES_PATH, string(resource), Renderer.VIEWS_FOLDER, string(action) * TEMPLATE_EXT)))
 
     Dict{Symbol,AbstractString}(:html => include_template(joinpath(Genie.APP_PATH, Renderer.LAYOUTS_FOLDER, string(layout) * TEMPLATE_EXT), partial = false) |> string |> doc)
   catch ex
@@ -196,7 +196,7 @@ Renders a Flax view corresponding to a resource and a controller action.
 """
 function flax(resource::Symbol, action::Symbol, layout::Symbol; vars...) :: Dict{Symbol,String}
   try
-    julia_action_template_func = joinpath(Genie.RESOURCE_PATH, string(resource), Renderer.VIEWS_FOLDER, string(action) * FILE_EXT) |> include
+    julia_action_template_func = joinpath(Genie.RESOURCES_PATH, string(resource), Renderer.VIEWS_FOLDER, string(action) * FILE_EXT) |> include
     julia_layout_template_func = joinpath(Genie.APP_PATH, Renderer.LAYOUTS_FOLDER, string(layout) * FILE_EXT) |> include
 
     task_local_storage(:__vars, Dict{Symbol,Any}(vars))
@@ -238,7 +238,7 @@ function json(resource::Symbol, action::Symbol; vars...) :: Dict{Symbol,String}
   try
     task_local_storage(:__vars, Dict{Symbol,Any}(vars))
 
-    return Dict{Symbol,AbstractString}(:json => (joinpath(Genie.RESOURCE_PATH, string(resource), Renderer.VIEWS_FOLDER, string(action) * JSON_FILE_EXT) |> include) |> JSON.json)
+    return Dict{Symbol,AbstractString}(:json => (joinpath(Genie.RESOURCES_PATH, string(resource), Renderer.VIEWS_FOLDER, string(action) * JSON_FILE_EXT) |> include) |> JSON.json)
   catch ex
     Logger.log("Error generating JSON view", :err)
     Logger.log(string(ex), :err)

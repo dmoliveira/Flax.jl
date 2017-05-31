@@ -24,7 +24,7 @@ const NORMAL_ELEMENTS = [ :html, :head, :body, :title, :style, :address, :articl
                           :del, :ins, :caption, :col, :colgroup, :table, :tbody, :td, :tfoot, :th, :thead, :tr,
                           :button, :datalist, :fieldset, :form, :label, :legend, :meter, :optgroup, :option,
                           :output, :progress, :select, :textarea, :details, :dialog, :menu, :menuitem, :summary,
-                          :slot, :template, :blockquote]
+                          :slot, :template, :blockquote, :center]
 const VOID_ELEMENTS   = [:base, :link, :meta, :hr, :br, :area, :img, :track, :param, :source, :input]
 const BOOL_ATTRIBUTES = [:checked, :disabled, :selected]
 

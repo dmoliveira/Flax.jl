@@ -1,6 +1,8 @@
-Gumbo
-SHA
-Reexport
-JSON
+julia 0.5
+
 DataStructures
 Documenter
+Gumbo
+JSON
+Reexport
+SHA

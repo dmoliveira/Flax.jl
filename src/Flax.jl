@@ -134,10 +134,10 @@ function _include_template(path::String; partial = true, func_name = "") :: Stri
   path = relpath(path)
 
   f_name = func_name != "" ? Symbol(func_name) : Symbol(function_name(path))
-  Genie.config.flax_compile_templates && isdefined(f_name) && return getfield(current_module(), f_name)()
+  App.config.flax_compile_templates && isdefined(f_name) && return getfield(current_module(), f_name)()
 
-  if Genie.config.flax_compile_templates
-    file_path = joinpath(Genie.config.cache_folder, path) * FILE_EXT
+  if App.config.flax_compile_templates
+    file_path = joinpath(App.config.cache_folder, path) * FILE_EXT
     cache_file_name = sha1(path)
 
     if isfile(file_path)
@@ -145,8 +145,8 @@ function _include_template(path::String; partial = true, func_name = "") :: Stri
       return (file_path |> include)()
     else
       flax_code = html_to_flax(path, partial = partial)
-      if ! isdir(joinpath(Genie.config.cache_folder, dirname(path)))
-        mkpath(joinpath(Genie.config.cache_folder, dirname(path)))
+      if ! isdir(joinpath(App.config.cache_folder, dirname(path)))
+        mkpath(joinpath(App.config.cache_folder, dirname(path)))
       end
       open(file_path, "w") do io
         write(io, flax_code)

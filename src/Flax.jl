@@ -6,7 +6,6 @@ module Flax
 using Genie, Renderer, Gumbo, Logger, Configuration, Router, SHA, App, Reexport, JSON, DataStructures
 
 if IS_IN_APP
-  using ControllerHelper, ValidationHelper
   @eval parse("@dependencies")
 end
 

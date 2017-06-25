@@ -32,8 +32,8 @@ const FILE_EXT      = ".flax.jl"
 const TEMPLATE_EXT  = ".flax.html"
 const JSON_FILE_EXT = ".json.jl"
 
-typealias HTMLString String
-typealias JSONString String
+const HTMLString = String
+const JSONString = String
 
 task_local_storage(:__vars, Dict{Symbol,Any}())
 

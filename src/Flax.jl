@@ -3,7 +3,7 @@ Compiled templating language for Genie.
 """
 module Flax
 
-using Genie, Renderer, Gumbo, Logger, Configuration, Router, SHA, App, Reexport, JSON, DataStructures
+using Genie, Renderer, Gumbo, Logger, Genie.Configuration, Router, SHA, App, Reexport, JSON, DataStructures
 
 if IS_IN_APP
   @eval parse("@dependencies")
@@ -31,8 +31,8 @@ const FILE_EXT      = ".flax.jl"
 const TEMPLATE_EXT  = ".flax.html"
 const JSON_FILE_EXT = ".json.jl"
 
-typealias HTMLString String
-typealias JSONString String
+const HTMLString = String
+const JSONString = String
 
 task_local_storage(:__vars, Dict{Symbol,Any}())
 
@@ -141,7 +141,7 @@ function _include_template(path::String; partial = true, func_name = "") :: Stri
 
     if isfile(file_path)
       App.config.log_views && Logger.log("Hit cache for view $path", :info)
-      return (file_path |> include)()
+      return Base.invokelatest(file_path |> include)
     else
       flax_code = html_to_flax(path, partial = partial)
       if ! isdir(joinpath(App.config.cache_folder, dirname(path)))

@@ -80,8 +80,9 @@ Generates a regular HTML element in the form <...></...>
 """
 function normal_element(f::Function, elem::String, attrs::Vector{Pair{Symbol,String}} = Vector{Pair{Symbol,String}}()) :: HTMLString
   a = attributes(attrs)
-
-  """<$( string(lowercase(elem)) * (! isempty(a) ? (" " * join(a, " ")) : "") )>\n$(prepare_template(f()))\n</$( string(lowercase(elem)) )>\n"""
+  """ <$( string(lowercase(elem)) * (! isempty(a) ? (" " * join(a, " ")) : "") )>
+        $(prepare_template(f()))
+      </$( string(lowercase(elem)) )>\n"""
 end
 function normal_element(elem::String, attrs::Vector{Pair{Symbol,String}} = Vector{Pair{Symbol,String}}()) :: HTMLString
   a = attributes(attrs)
@@ -156,7 +157,7 @@ function _include_template(path::String; partial = true, func_name = "") :: Stri
 
   flax_code = html_to_flax(path, partial = partial)
   try
-    (flax_code |> include_string)()
+    Base.invokelatest(flax_code |> include_string)
   catch ex
     @show flax_code
 

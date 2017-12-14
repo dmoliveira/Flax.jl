@@ -30,6 +30,9 @@ const BOOL_ATTRIBUTES = [:checked, :disabled, :selected]
 const FILE_EXT      = ".flax.jl"
 const TEMPLATE_EXT  = ".flax.html"
 const JSON_FILE_EXT = ".json.jl"
+const MARKDOWN_FILE_EXT = ".md"
+
+const SUPPORTED_HTML_OUTPUT_FILE_FORMATS = [TEMPLATE_EXT, MARKDOWN_FILE_EXT]
 
 const HTMLString = String
 const JSONString = String
@@ -131,7 +134,19 @@ function include_template(path::String; partial = true, func_name = "") :: Strin
   end
 end
 function _include_template(path::String; partial = true, func_name = "") :: String
-  path = relpath(path)
+  _path, _extension = "", ""
+  for file_extension in SUPPORTED_HTML_OUTPUT_FILE_FORMATS
+    if isfile(relpath(path * file_extension))
+      _path, _extension = relpath(path * file_extension), file_extension
+      break
+    end
+  end
+
+  _path == "" ? error("File not found $path in $(@__FILE__):$(@__LINE__)") : path = _path
+
+  if _extension == MARKDOWN_FILE_EXT
+    return Markdown.parse(include_string(string('"', readstring(path), '"'))) |> Markdown.html
+  end
 
   f_name = func_name != "" ? Symbol(func_name) : Symbol(function_name(path))
   App.config.flax_compile_templates && isdefined(f_name) && return getfield(current_module(), f_name)()
@@ -177,9 +192,9 @@ Renders a HTML view corresponding to a resource and a controller action.
 function html(resource::Symbol, action::Symbol, layout::Symbol; vars...) :: Dict{Symbol,String}
   try
     task_local_storage(:__vars, Dict{Symbol,Any}(vars))
-    task_local_storage(:__yield, include_template(joinpath(Genie.RESOURCES_PATH, string(resource), Renderer.VIEWS_FOLDER, string(action) * TEMPLATE_EXT)))
+    task_local_storage(:__yield, include_template(joinpath(Genie.RESOURCES_PATH, string(resource), Renderer.VIEWS_FOLDER, string(action))))
 
-    Dict{Symbol,AbstractString}(:html => include_template(joinpath(Genie.APP_PATH, Renderer.LAYOUTS_FOLDER, string(layout) * TEMPLATE_EXT), partial = false) |> string |> doc)
+    Dict{Symbol,AbstractString}(:html => include_template(joinpath(Genie.APP_PATH, Renderer.LAYOUTS_FOLDER, string(layout)), partial = false) |> string |> doc)
   catch ex
     Logger.log(string(ex), :err)
     Logger.log("$(@__FILE__):$(@__LINE__)", :err)

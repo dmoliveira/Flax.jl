@@ -135,10 +135,14 @@ function include_template(path::String; partial = true, func_name = "") :: Strin
 end
 function _include_template(path::String; partial = true, func_name = "") :: String
   _path, _extension = "", ""
-  for file_extension in SUPPORTED_HTML_OUTPUT_FILE_FORMATS
-    if isfile(relpath(path * file_extension))
-      _path, _extension = relpath(path * file_extension), file_extension
-      break
+  if isfile(relpath(path))
+    _path, _extension = relpath(path), split(path, ".")[end]
+  else 
+    for file_extension in SUPPORTED_HTML_OUTPUT_FILE_FORMATS
+      if isfile(relpath(path * file_extension))
+        _path, _extension = relpath(path * file_extension), file_extension
+        break
+      end
     end
   end
 

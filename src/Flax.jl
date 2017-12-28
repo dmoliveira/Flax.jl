@@ -170,7 +170,7 @@ function _include_template(path::String; partial = true, func_name = "") :: Stri
       open(file_path, "w") do io
         write(io, flax_code)
       end
-      return (flax_code |> include_string)()
+      return Base.invokelatest(flax_code |> include_string)
     end
   end
 
